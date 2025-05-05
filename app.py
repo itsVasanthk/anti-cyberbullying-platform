@@ -1,8 +1,14 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, redirect, flash, url_for, session
+from models import db, User
 import joblib
 
 app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SECRET_KEY'] = 'your-secret-key'
+db.init_app(app)
 
+# Load ML model and vectorizer
 model = joblib.load("bullying_detection_model.pkl")
 vectorizer = joblib.load("vectorizer.pkl")
 
@@ -21,7 +27,6 @@ def home():
 def report():
     message = None
     if request.method == "POST":
-        # Save the report or just acknowledge it
         message = "Thank you for your report. We will review it shortly."
     return render_template("report.html", message=message)
 
@@ -33,8 +38,38 @@ def support():
 def profile():
     return "User Profile Page"
 
-@app.route("/login")
+@app.route("/login", methods=["GET", "POST"])
 def login():
-    return "Login Page"
+    return render_template("login.html")
+
+
+@app.route("/signup", methods=["GET", "POST"])
+def signup():
+    if request.method == "POST":
+        username = request.form["username"]
+        email = request.form["email"]
+        password = request.form["password"]
+
+        # Check for existing user
+        existing_user = User.query.filter(
+            (User.username == username) | (User.email == email)
+        ).first()
+        if existing_user:
+            flash("Username or Email already exists.")
+            return redirect(url_for('signup'))
+
+        # Create new user
+        new_user = User(username=username, email=email)
+        new_user.set_password(password)
+        db.session.add(new_user)
+        db.session.commit()
+        flash("Signup successful! You can now log in.")
+        return redirect(url_for('login'))
+
+    return render_template("signup.html")
+
+# Run the app
 if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
     app.run(debug=True)
