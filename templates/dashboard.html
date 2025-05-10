@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Report Dashboard{% endblock %}
+
+{% block content %}
+    <h2>📋 Submitted Reports</h2>
+
+    {% if reports %}
+        <table border="1" cellpadding="10" cellspacing="0">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Reported By</th>
+                    <th>Offender Username</th>
+                    <th>Message</th>
+                    <th>Timestamp</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in reports %}
+                <tr>
+                    <td>{{ report.id }}</td>
+                    <td>{{ report.reported_by }}</td>
+                    <td>{{ report.offender_username or "N/A" }}</td>
+                    <td>{{ report.message }}</td>
+                    <td>{{ report.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No reports submitted yet.</p>
+    {% endif %}
+{% endblock %}
