@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}My Reports{% endblock %}
+
+{% block content %}
+    <h2>📝 My Submitted Reports</h2>
+
+    {% if reports %}
+        <table border="1" cellpadding="10" cellspacing="0">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Offender Username</th>
+                    <th>Message</th>
+                    <th>Status</th>
+                    <th>Timestamp</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in reports %}
+                <tr>
+                    <td>{{ report.id }}</td>
+                    <td>{{ report.offender_username or "N/A" }}</td>
+                    <td>{{ report.message }}</td>
+                    <td>{{ report.status }}</td>
+                    <td>{{ report.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>You have not submitted any reports yet.</p>
+    {% endif %}
+{% endblock %}

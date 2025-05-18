@@ -20,19 +20,20 @@ migrate = Migrate(app, db)
 # Setup Flask-Login
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = "login"  # Redirect to login if not logged in
+login_manager.login_view = "login"
 
 # Load ML model and vectorizer
 model = joblib.load("bullying_detection_model.pkl")
 vectorizer = joblib.load("vectorizer.pkl")
 
-# User model for Flask-Login
+
+# User model
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), unique=True, nullable=False)
     email = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(150), nullable=False)
-    is_admin = db.Column(db.Boolean, default=False)  # ✅ Add this line
+    is_admin = db.Column(db.Boolean, default=False)
 
     def set_password(self, password):
         from werkzeug.security import generate_password_hash
@@ -51,12 +52,15 @@ class Report(db.Model):
     offender_profile = db.Column(db.String(300))
     message = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    status = db.Column(db.String(50), default='Pending')  # New field
 
 
-# Load user by ID for Flask-Login
+
+# Flask-Login user loader
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
 
 # Home route
 @app.route("/", methods=["GET", "POST"])
@@ -70,7 +74,8 @@ def home():
             result = "Bullying Detected 🚨" if prediction == 1 else "Not Bullying ✅"
     return render_template("index.html", result=result)
 
-# Report route: Only logged-in users can access it
+
+# Report route
 @app.route("/report", methods=["GET", "POST"])
 @login_required
 def report():
@@ -95,18 +100,20 @@ def report():
     return render_template("report.html", message=message)
 
 
-# Support route
+# Support page
 @app.route("/support")
 def support():
     return render_template("support.html")
 
-# Profile route
+
+# Profile page
 @app.route("/profile")
 @login_required
 def profile():
     return render_template("profile.html", name=current_user.username)
 
-# Login route
+
+# Login
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -123,7 +130,8 @@ def login():
 
     return render_template("login.html")
 
-# Signup route
+
+# Signup
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
     if request.method == "POST":
@@ -147,6 +155,8 @@ def signup():
 
     return render_template("signup.html")
 
+
+# Logout
 @app.route("/logout", methods=["POST"])
 @login_required
 def logout():
@@ -154,17 +164,41 @@ def logout():
     flash("You have been logged out.")
     return redirect(url_for("login"))
 
+
+# Admin Dashboard
 @app.route("/dashboard")
 @login_required
 def dashboard():
     if not current_user.is_admin:
         flash("You do not have permission to access this page.", "danger")
-        return redirect(url_for("home"))  # Or redirect to any page you choose
-    return render_template("dashboard.html")  # Only accessible by admins
+        return redirect(url_for("home"))
+
+    reports = Report.query.order_by(Report.timestamp.desc()).all()
+    return render_template("dashboard.html", reports=reports)
+
+@app.route("/update_status/<int:report_id>", methods=["POST"])
+@login_required
+def update_status(report_id):
+    if not current_user.is_admin:
+        flash("Unauthorized action", "danger")
+        return redirect(url_for("home"))
+
+    new_status = request.form.get("status")
+    report = Report.query.get_or_404(report_id)
+    report.status = new_status
+    db.session.commit()
+    flash(f"Status updated to {new_status}.", "success")
+    return redirect(url_for("dashboard"))
+
+@app.route("/user_dashboard")
+@login_required
+def user_dashboard():
+    user_reports = Report.query.filter_by(reported_by=current_user.username).order_by(Report.timestamp.desc()).all()
+    return render_template("user_dashboard.html", reports=user_reports)
 
 
 # Run the app
 if __name__ == "__main__":
     with app.app_context():
-        db.create_all()  # Ensure the database is created
+        db.create_all()
     app.run(debug=True)

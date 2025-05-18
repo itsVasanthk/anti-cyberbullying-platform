@@ -70,3 +70,13 @@ button {
 button:hover {
     background-color: #0056b3;
 }
+
+.nav-button {
+    background: none;
+    border: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 10px;
+}

@@ -4,22 +4,43 @@
     <meta charset="UTF-8">
     <title>{% block title %}Cyberbullying Detection & Support{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
     <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
     <div class="navbar">
         <h1>Cyberbullying Detection & Support</h1>
         <div class="navbar-icons">
-            <!-- Corrected Login link to use url_for for dynamic routing -->
-            <a href="{{ url_for('dashboard') }}">Dashboard</a>
-            <a href="{{ url_for('login') }}"><i class="fas fa-sign-in-alt"></i> Login</a>
-            <a href="{{ url_for('profile') }}"><i class="fas fa-user"></i> Profile</a>
+            <a href="{{ url_for('home') }}"><i class="fas fa-home"></i> Home</a>
+            {% if current_user.is_authenticated %}
+                {% if current_user.is_admin %}
+                    <a href="{{ url_for('dashboard') }}">Admin Dashboard</a>
+                {% else %}
+                    <a href="{{ url_for('user_dashboard') }}">My Reports</a>
+                {% endif %}
+                <a href="{{ url_for('profile') }}"><i class="fas fa-user"></i> Profile</a>
+                <form action="{{ url_for('logout') }}" method="post" style="display:inline;">
+                    <button type="submit" class="nav-button"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                </form>
+            {% else %}
+                <a href="{{ url_for('login') }}"><i class="fas fa-sign-in-alt"></i> Login</a>
+                <a href="{{ url_for('signup') }}"><i class="fas fa-user-plus"></i> Sign Up</a>
+            {% endif %}
         </div>
     </div>
 
     <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
         {% block content %}{% endblock %}
     </div>
 </body>

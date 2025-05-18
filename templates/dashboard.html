@@ -13,6 +13,7 @@
                     <th>Offender Username</th>
                     <th>Message</th>
                     <th>Timestamp</th>
+                    <th>Status</th>
                 </tr>
             </thead>
             <tbody>
@@ -23,6 +24,15 @@
                     <td>{{ report.offender_username or "N/A" }}</td>
                     <td>{{ report.message }}</td>
                     <td>{{ report.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>
+                        <form action="{{ url_for('update_status', report_id=report.id) }}" method="POST">
+                            <select name="status" onchange="this.form.submit()">
+                                {% for option in ['Pending', 'In Review', 'Resolved'] %}
+                                    <option value="{{ option }}" {% if report.status == option %}selected{% endif %}>{{ option }}</option>
+                                {% endfor %}
+                            </select>
+                        </form>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
