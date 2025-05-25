@@ -1,0 +1,22 @@
+<!-- templates/report.html -->
+{% extends "base.html" %}
+{% block title %}Report Cyberbullying{% endblock %}
+
+{% block content %}
+    <h2>Report Cyberbullying</h2>
+
+    {% if current_user.is_authenticated %}
+        <form method="POST" action="/report">
+            <input type="text" name="offender_username" placeholder="Offender's Username (Optional)">
+            <input type="text" name="offender_profile" placeholder="Offender's Profile Link (Optional)">
+            <textarea name="report_text" placeholder="Describe what happened..." required></textarea>
+            <button type="submit">Submit Report</button>
+        </form>
+    {% else %}
+        <p>You must be logged in to submit a report. Please <a href="{{ url_for('login') }}">log in</a> to continue.</p>
+    {% endif %}
+
+    {% if message %}
+        <p>{{ message }}</p>
+    {% endif %}
+{% endblock %}
